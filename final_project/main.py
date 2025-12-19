@@ -44,32 +44,61 @@ def sample_color(coord, image: Image.Image, radius: int = 5):
     return (r_total // count, g_total // count, b_total // count)
 
 
-def generate_hexagon(coord, color):
+def generate_hexagon(coord, color, size: int = 6):
     """
-    Generate the SVG geometry for a hexagon.
-    Placeholder implementation.
+    Generate an SVG polygon representing a hexagon at coord with given RGB color.
     """
-    return ""
+    x, y = coord
+    r, g, b = color
 
+    points = []
+    for i in range(6):
+        angle = math.pi / 3 * i
+        px = x + size * math.cos(angle)
+        py = y + size * math.sin(angle)
+        points.append(f"{px:.2f},{py:.2f}")
+
+    points_str = " ".join(points)
+    color_str = f"rgb({r},{g},{b})"
+
+    return f'<polygon points="{points_str}" fill="{color_str}" />'
 
 def build_svg(image: Image.Image) -> str:
     """
-    Core algorithm as described in the course.
+    Build the SVG document from the input image.
     """
-    output = []
+    width, height = image.size
+    elements = []
 
     x, y = 0, 0
-    width, height = image.size
 
     while True:
         coord = compute_next_coordinate(x, y, width, height)
         if coord == (-1, -1):
             break
 
-        rgb = sample_color(coord, image)
-        geometry = generate_hexagon(coord, rgb)
-        output.append(geometry)
+        color = sample_color(coord, image)
+        hexagon = generate_hexagon(coord, color)
+        elements.append(hexagon)
 
         x, y = coord
 
-    return "\n".join(output)
+    svg_elements = "\n".join(elements)
+
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{width}" height="{height}">\n'
+        f'{svg_elements}\n'
+        f'</svg>'
+    )
+def save_svg(svg_content: str, filename: str = "output.svg"):
+    """
+    Write SVG content to a file.
+    """
+    with open(filename, "w") as f:
+        f.write(svg_content)
+
+if __name__ == "__main__":
+    img = load_image("example.png")
+    svg = build_svg(img)
+    save_svg(svg)
